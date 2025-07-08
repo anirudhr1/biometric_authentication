@@ -12,6 +12,8 @@ This is a simple Flask-based biometric simulator that allows users to register a
 After Setup open your browser and go to:
 http://127.0.0.1:5000
 
+First register with your name and after press login to check the authentication process.
+
 ## 🚀 Setup Instructions
 
 ```bash
