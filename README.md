@@ -9,6 +9,9 @@ This is a simple Flask-based biometric simulator that allows users to register a
 - Simple and responsive web interface
 - Built with Flask, OpenCV, HTML5/CSS
 
+After Setup open your browser and go to:
+http://127.0.0.1:5000
+
 ## 🚀 Setup Instructions
 
 ```bash
@@ -16,3 +19,4 @@ git clone https://github.com/anirudhr1/biometric_authentication.git
 cd biometric_authentication
 pip install -r requirements.txt
 python app.py
+
