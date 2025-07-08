@@ -2,52 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Biometric Face Auth</title>
+  <title>🔐 Biometric Face Authentication</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; background-color: #f9f9f9; }
-    video, canvas { border: 2px solid #333; border-radius: 8px; }
-    input, button {
-      margin: 10px;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
     }
+
+    .card {
+      background-color: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      padding: 30px 40px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      animation: fadeIn 0.8s ease;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+      font-size: 1.6em;
+      color: #333;
+    }
+
+    video, canvas {
+      border-radius: 12px;
+      border: 2px solid #ccc;
+      margin: 15px 0;
+    }
+
+    input[type="text"], button {
+      padding: 12px 14px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin: 8px;
+      width: 85%;
+    }
+
+    input[type="text"] {
+      box-sizing: border-box;
+    }
+
     button {
       background-color: #4CAF50;
       color: white;
+      border: none;
       cursor: pointer;
+      transition: all 0.25s ease-in-out;
     }
+
     button:hover {
-      background-color: #45a049;
+      background-color: #388e3c;
+      transform: scale(1.03);
     }
-    #usernameDiv { margin-top: 10px; }
-    .message { color: blue; font-weight: bold; margin-top: 20px; }
-    .error { color: red; }
+
+    #usernameDiv {
+      margin-top: 12px;
+    }
+
+    .message {
+      margin-top: 20px;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .message.success {
+      color: #2e7d32;
+      background-color: #d0f0d2;
+    }
+
+    .message.error {
+      color: #c62828;
+      background-color: #fddede;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
 
-  <h2>Biometric Face Authentication</h2>
+  <div class="card">
+    <h2>🔐 Biometric Face Authentication</h2>
 
-  <video id="video" width="320" height="240" autoplay></video>
-  <br>
-  <canvas id="canvas" style="display:none;"></canvas>
+    <video id="video" width="320" height="240" autoplay></video>
+    <canvas id="canvas" style="display:none;"></canvas>
 
-  <form id="faceForm" method="POST" action="/upload">
-    <input type="hidden" name="image" id="imageInput">
-    
-    <div id="usernameDiv">
-      <input type="text" name="username" id="username" placeholder="Enter username">
-    </div>
+    <form id="faceForm" method="POST" action="/upload">
+      <input type="hidden" name="image" id="imageInput">
 
-    <button type="submit" name="action" value="register" onclick="setMode('register')">Register</button>
-    <button type="submit" name="action" value="login" onclick="setMode('login')">Login</button>
-  </form>
+      <div id="usernameDiv">
+        <input type="text" name="username" id="username" placeholder="👤 Enter username">
+      </div>
 
-  {% if result %}
-    <p class="message">{{ result }}</p>
-  {% endif %}
+      <button type="submit" name="action" value="register" onclick="setMode('register')">📝 Register</button>
+      <button type="submit" name="action" value="login" onclick="setMode('login')">🔓 Login</button>
+    </form>
+
+    {% if result %}
+      <p class="message {% if '✅' in result %}success{% else %}error{% endif %}">{{ result }}</p>
+    {% endif %}
+  </div>
 
   <script>
     let mode = "register";
@@ -62,7 +127,6 @@
     const imageInput = document.getElementById('imageInput');
     const form = document.getElementById('faceForm');
 
-    // Access webcam
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         video.srcObject = stream;
@@ -71,7 +135,6 @@
         alert("❌ Webcam access denied or not available: " + err.message);
       });
 
-    // Capture frame on submit
     form.onsubmit = function(e) {
       const context = canvas.getContext('2d');
       canvas.width = video.videoWidth;
