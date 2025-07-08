@@ -34,7 +34,7 @@ load_model()
 def index():
     return render_template('index.html')
 
-@app.route('/upload', methods=['POST'])  # ✅ Allow POST
+@app.route('/upload', methods=['POST'])
 def upload():
     data_url = request.form['image']
     username = request.form.get('username')
@@ -43,15 +43,21 @@ def upload():
     if action == "register" and not username:
         return render_template('index.html', result="❌ Username is required for registration.")
 
-    # Decode base64 image from webcam
-    encoded = data_url.split(',')[1]
-    image_data = base64.b64decode(encoded)
-    np_arr = np.frombuffer(image_data, np.uint8)
-    img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    # Decode base64 image
+    try:
+        encoded = data_url.split(',')[1]
+        image_data = base64.b64decode(encoded)
+        np_arr = np.frombuffer(image_data, np.uint8)
+        img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        if img is None:
+            return render_template('index.html', result="❌ Failed to decode image. Try again.")
+    except Exception as e:
+        return render_template('index.html', result=f"❌ Error decoding image: {str(e)}")
+
     (h, w) = img.shape[:2]
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # DNN face detection
+    # Face detection
     blob = cv2.dnn.blobFromImage(img, 1.0, (300, 300), (104.0, 177.0, 123.0))
     net.setInput(blob)
     detections = net.forward()
@@ -65,7 +71,7 @@ def upload():
             faces.append((x1, y1, x2 - x1, y2 - y1))
 
     if len(faces) == 0:
-        return render_template('index.html', result="❌ No face detected.")
+        return render_template('index.html', result="❌ No face detected. Try again with better lighting.")
 
     x, y, w, h = faces[0]
     roi = gray[y:y+h, x:x+w]
@@ -77,8 +83,8 @@ def upload():
         path = os.path.join(user_dir, f"{count+1}.jpg")
         cv2.imwrite(path, roi)
 
-        # Retrain
-        subprocess.run(["python", "train.py"])
+        # Retrain the model
+        subprocess.run(["python3" if os.name != "nt" else "python", "train.py"])
         load_model()
 
         return render_template('index.html', result=f"✅ Registered '{username}' and retrained model.")
@@ -95,6 +101,6 @@ def upload():
             return render_template('index.html', result="❌ Face not recognized.")
 
     return render_template('index.html', result="❌ Unknown action.")
-    
+
 if __name__ == '__main__':
     app.run(debug=True)

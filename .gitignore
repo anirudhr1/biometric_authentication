@@ -1,0 +1,23 @@
+# Python cache and logs
+__pycache__/
+*.pyc
+*.pyo
+*.log
+
+# Model and training data
+*.pkl
+*.yml
+
+# Executables and builds
+*.exe
+dist/
+build/
+
+# Images (optional — comment out if needed)
+*.jpg
+*.jpeg
+*.png
+
+# System files
+.DS_Store
+Thumbs.db
