@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>🔐 Biometric Face Authentication</title>
+  <title>🔐 Biometric Authentication</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -13,31 +13,27 @@
       height: 100vh;
       margin: 0;
     }
-
     .card {
       background-color: #ffffff;
       border-radius: 16px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
       padding: 30px 40px;
-      max-width: 400px;
+      max-width: 450px;
       width: 100%;
       text-align: center;
       animation: fadeIn 0.8s ease;
     }
-
     h2 {
       margin-bottom: 10px;
       font-size: 1.6em;
       color: #333;
     }
-
     video, canvas {
       border-radius: 12px;
       border: 2px solid #ccc;
       margin: 15px 0;
     }
-
-    input[type="text"], button {
+    input[type="text"], input[type="file"], button {
       padding: 12px 14px;
       font-size: 16px;
       border-radius: 8px;
@@ -45,11 +41,6 @@
       margin: 8px;
       width: 85%;
     }
-
-    input[type="text"] {
-      box-sizing: border-box;
-    }
-
     button {
       background-color: #4CAF50;
       color: white;
@@ -57,33 +48,27 @@
       cursor: pointer;
       transition: all 0.25s ease-in-out;
     }
-
     button:hover {
       background-color: #388e3c;
       transform: scale(1.03);
     }
-
     #usernameDiv {
       margin-top: 12px;
     }
-
     .message {
       margin-top: 20px;
       font-weight: bold;
       padding: 10px;
       border-radius: 8px;
     }
-
     .message.success {
       color: #2e7d32;
       background-color: #d0f0d2;
     }
-
     .message.error {
       color: #c62828;
       background-color: #fddede;
     }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(30px); }
       to { opacity: 1; transform: translateY(0); }
@@ -91,22 +76,26 @@
   </style>
 </head>
 <body>
-
   <div class="card">
     <h2>🔐 Biometric Face Authentication</h2>
-
     <video id="video" width="320" height="240" autoplay></video>
     <canvas id="canvas" style="display:none;"></canvas>
 
     <form id="faceForm" method="POST" action="/upload">
       <input type="hidden" name="image" id="imageInput">
-
       <div id="usernameDiv">
         <input type="text" name="username" id="username" placeholder="👤 Enter username">
       </div>
-
       <button type="submit" name="action" value="register" onclick="setMode('register')">📝 Register</button>
-      <button type="submit" name="action" value="login" onclick="setMode('login')">🔓 Login</button>
+      <button type="submit" name="action" value="login" onclick="setMode('login')">🔓 Face Login</button>
+    </form>
+
+    <hr style="margin: 30px 0; border: none; border-top: 1px solid #ccc;">
+
+    <h2>🧬 Fingerprint Authentication</h2>
+    <form action="/fingerprint" method="POST" enctype="multipart/form-data">
+      <input type="file" name="fingerprint" accept="image/*" required><br>
+      <button type="submit">🔍 Authenticate Fingerprint</button>
     </form>
 
     {% if result %}
@@ -116,7 +105,6 @@
 
   <script>
     let mode = "register";
-
     function setMode(m) {
       mode = m;
       document.getElementById("usernameDiv").style.display = (mode === "register") ? "block" : "none";
@@ -144,6 +132,5 @@
       imageInput.value = dataURL;
     };
   </script>
-
 </body>
 </html>

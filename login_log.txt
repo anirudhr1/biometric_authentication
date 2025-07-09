@@ -1,0 +1,6 @@
+DEBUG:root:login.py started
+DEBUG:root:Detected face. ID: 1, Confidence: 28.836213897266592
+DEBUG:root:Login success: Anirudh with confidence 28.836213897266592
+DEBUG:root:login.py started
+DEBUG:root:Detected face. ID: 1, Confidence: 31.686506076772176
+DEBUG:root:Login success: Anirudh with confidence 31.686506076772176

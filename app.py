@@ -8,7 +8,9 @@ import subprocess
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'faces'
+FINGERPRINT_FOLDER = 'fingerprints'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(FINGERPRINT_FOLDER, exist_ok=True)
 
 # Load DNN face detector
 net = cv2.dnn.readNetFromCaffe("deploy.prototxt", "res10_300x300_ssd_iter_140000.caffemodel")
@@ -30,6 +32,40 @@ def load_model():
 
 load_model()
 
+def match_fingerprint(input_fp_path, known_folder=FINGERPRINT_FOLDER):
+    orb = cv2.ORB_create()
+    input_img = cv2.imread(input_fp_path, 0)
+    if input_img is None:
+        return None
+
+    kp1, des1 = orb.detectAndCompute(input_img, None)
+    bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
+    best_match = None
+    best_score = float('inf')
+
+    for file in os.listdir(known_folder):
+        if not file.lower().endswith(('.jpg', '.jpeg', '.png')):
+            continue
+
+        known_img = cv2.imread(os.path.join(known_folder, file), 0)
+        if known_img is None:
+            continue
+
+        kp2, des2 = orb.detectAndCompute(known_img, None)
+        if des1 is None or des2 is None:
+            continue
+
+        matches = bf.match(des1, des2)
+        matches = sorted(matches, key=lambda x: x.distance)
+        score = sum(m.distance for m in matches[:30])
+
+        if score < best_score:
+            best_score = score
+            best_match = file.split('.')[0]
+
+    return best_match if best_score < 1000 else None
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -43,21 +79,19 @@ def upload():
     if action == "register" and not username:
         return render_template('index.html', result="❌ Username is required for registration.")
 
-    # Decode base64 image
     try:
         encoded = data_url.split(',')[1]
         image_data = base64.b64decode(encoded)
         np_arr = np.frombuffer(image_data, np.uint8)
         img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
         if img is None:
-            return render_template('index.html', result="❌ Failed to decode image. Try again.")
+            return render_template('index.html', result="❌ Failed to decode image.")
     except Exception as e:
         return render_template('index.html', result=f"❌ Error decoding image: {str(e)}")
 
     (h, w) = img.shape[:2]
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    # Face detection
     blob = cv2.dnn.blobFromImage(img, 1.0, (300, 300), (104.0, 177.0, 123.0))
     net.setInput(blob)
     detections = net.forward()
@@ -71,7 +105,7 @@ def upload():
             faces.append((x1, y1, x2 - x1, y2 - y1))
 
     if len(faces) == 0:
-        return render_template('index.html', result="❌ No face detected. Try again with better lighting.")
+        return render_template('index.html', result="❌ No face detected.")
 
     x, y, w, h = faces[0]
     roi = gray[y:y+h, x:x+w]
@@ -83,7 +117,6 @@ def upload():
         path = os.path.join(user_dir, f"{count+1}.jpg")
         cv2.imwrite(path, roi)
 
-        # Retrain the model
         subprocess.run(["python3" if os.name != "nt" else "python", "train.py"])
         load_model()
 
@@ -91,16 +124,36 @@ def upload():
 
     elif action == "login":
         if recognizer is None:
-            return render_template('index.html', result="⚠️ Model not trained yet. Please register first.")
+            return render_template('index.html', result="⚠️ Model not trained yet.")
 
         id_, conf = recognizer.predict(roi)
         if conf < 65:
             name = labels.get(id_, "Unknown")
-            return render_template('index.html', result=f"✅ Login successful: {name} (Confidence: {round(conf, 2)})")
+            return render_template('index.html', result=f"✅ Face login successful: {name} (Confidence: {round(conf, 2)})")
         else:
             return render_template('index.html', result="❌ Face not recognized.")
 
     return render_template('index.html', result="❌ Unknown action.")
 
+@app.route('/fingerprint', methods=['POST'])
+def fingerprint():
+    if 'fingerprint' not in request.files:
+        return render_template('index.html', result="❌ No fingerprint uploaded.")
+
+    file = request.files['fingerprint']
+    if file.filename == '':
+        return render_template('index.html', result="❌ No fingerprint selected.")
+
+    temp_path = "temp_fingerprint.jpg"
+    file.save(temp_path)
+
+    match = match_fingerprint(temp_path)
+    os.remove(temp_path)
+
+    if match:
+        return render_template('index.html', result=f"✅ Fingerprint matched: {match}")
+    else:
+        return render_template('index.html', result="❌ Fingerprint not recognized.")
+        
 if __name__ == '__main__':
     app.run(debug=True)
